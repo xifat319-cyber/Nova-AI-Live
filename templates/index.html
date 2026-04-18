@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Nova AI - Scholar Assistant</title>
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+        <style>
+            :root {
+                --bg-color: #1e1e2f;
+                --chat-bg: #2a2a40;
+                --text-color: #ffffff;
+                --ai-msg-bg: #383854;
+                --user-msg-bg: #4f46e5;
+                --accent: #4f46e5;
+            }
+
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background-color: var(--bg-color);
+                color: var(--text-color);
+                margin: 0;
+                padding: 20px;
+                display: flex;
+                justify-content: center;
+                height: 95vh;
+                box-sizing: border-box;
+            }
+
+            .chat-container {
+                width: 100%;
+                max-width: 850px;
+                background: var(--chat-bg);
+                border-radius: 16px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            .header {
+                padding: 20px;
+                text-align: center;
+                background: #232336;
+                border-bottom: 1px solid #383854;
+                font-size: 22px;
+                font-weight: bold;
+                letter-spacing: 1px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+            }
+
+            .nova-logo {
+                background: linear-gradient(135deg, #4f46e5, #9333ea);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                font-weight: 900;
+                font-size: 26px;
+            }
+
+            .chat-box {
+                flex: 1;
+                overflow-y: auto;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .message {
+                padding: 15px 20px;
+                border-radius: 12px;
+                max-width: 85%;
+                font-size: 16px;
+                line-height: 1.6;
+                position: relative;
+            }
+
+            .user-message {
+                background-color: var(--user-msg-bg);
+                color: white;
+                align-self: flex-end;
+                border-bottom-right-radius: 2px;
+            }
+
+            .ai-message {
+                background-color: var(--ai-msg-bg);
+                color: #e2e8f0;
+                align-self: flex-start;
+                border-bottom-left-radius: 2px;
+                padding-top: 30px;
+            }
+
+            .ai-message p {
+                margin-top: 0;
+            }
+
+            .ai-message pre {
+                background: #1e1e2f;
+                padding: 10px;
+                border-radius: 8px;
+                overflow-x: auto;
+            }
+
+            .ai-message code {
+                font-family: monospace;
+                background: #1e1e2f;
+                padding: 3px 6px;
+                border-radius: 4px;
+                color: #a5b4fc;
+            }
+
+            .copy-btn {
+                position: absolute;
+                top: 8px;
+                right: 10px;
+                background: #4f46e5;
+                color: white;
+                border: none;
+                padding: 4px 10px;
+                border-radius: 6px;
+                font-size: 12px;
+                cursor: pointer;
+                transition: 0.2s;
+            }
+
+            .copy-btn:hover {
+                background: #4338ca;
+            }
+
+            .input-group {
+                padding: 15px 20px;
+                background: #232336;
+                border-top: 1px solid #383854;
+                display: flex;
+                gap: 10px;
+            }
+
+            input[type="text"] {
+                flex: 1;
+                padding: 15px;
+                border: 1px solid #383854;
+                border-radius: 12px;
+                background: var(--bg-color);
+                color: white;
+                font-size: 16px;
+                outline: none;
+                transition: 0.3s;
+            }
+
+            input[type="text"]:focus {
+                border-color: var(--accent);
+            }
+
+            button.send-btn {
+                padding: 15px 25px;
+                border: none;
+                background-color: var(--accent);
+                color: white;
+                border-radius: 12px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: bold;
+                transition: 0.3s;
+            }
+
+            button.send-btn:hover {
+                background-color: #4338ca;
+                transform: translateY(-2px);
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="chat-container">
+            <div class="header">
+                <span class="nova-logo">✨ Nova AI</span>
+            </div>
+            <div class="chat-box" id="chat-box">
+                <div class="message ai-message">Hello! I am Nova AI, your lightning-fast Scholar Assistant. How can I help you today?</div>
+            </div>
+            <div class="input-group">
+                <input type="text" id="user-input" placeholder="Ask Nova AI an academic question..." onkeypress="handleKeyPress(event)">
+                <button class="send-btn" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+
+        <script>
+            function handleKeyPress(event) {
+                if (event.key === "Enter") {
+                    sendMessage();
+                }
+            }
+
+            function copyText(buttonElement, textToCopy) {
+                navigator.clipboard.writeText(decodeURIComponent(textToCopy)).then(() => {
+                    buttonElement.innerText = "Copied!";
+                    setTimeout(() => {
+                        buttonElement.innerText = "Copy";
+                    }, 2000);
+                });
+            }
+
+            function sendMessage() {
+                var inputField = document.getElementById("user-input");
+                var message = inputField.value.trim();
+                if (message === "") return;
+
+                var chatBox = document.getElementById("chat-box");
+                chatBox.innerHTML += `<div class="message user-message">${message}</div>`;
+                inputField.value = "";
+
+                let loadingId = "loading-" + Date.now();
+                chatBox.innerHTML += `<div id="${loadingId}" class="message ai-message" style="color: #a0aec0; font-style: italic;">Nova is thinking...</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+                fetch("/ask", {
+                    method: "POST",
+                    body: new URLSearchParams({
+                        "message": message
+                    }),
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById(loadingId).remove();
+                        let formattedAnswer = marked.parse(data.answer);
+                        let encodedRawText = encodeURIComponent(data.answer);
+                        chatBox.innerHTML += `
+                    <div class="message ai-message">
+                        <button class="copy-btn" onclick="copyText(this, '${encodedRawText}')">Copy</button>
+                        ${formattedAnswer}
+                    </div>`;
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    })
+                    .catch(error => {
+                        document.getElementById(loadingId).innerHTML = "Connection Error.";
+                    });
+            }
+        </script>
+    </body>
+
+</html>
